@@ -1,0 +1,93 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>GymChat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-...." crossorigin="anonymous" />
+
+</head>
+<body>
+    <section>
+        <header class="msger-header">
+            <div class="msger-header-title">
+                ArnoldBot
+            </div>
+            <div class="msger-header-options">
+                <span><i class="fas fa-cog"></i></span>
+            </div>
+        </header>
+
+        <main id="chat-box" class="msger-chat">
+        </main>
+
+        <form class="msger-inputarea">
+            <input type="text" id="user-input" class="msger-input" placeholder="Type your message...">
+            <button type="button" class="msger-send-btn" onclick="sendMessage()">Send</button>
+        </form>
+    </section>
+
+    <script>
+        function sendMessage() {
+            var userInput = document.getElementById("user-input").value;
+        
+            if (userInput.trim() === "") {
+                return; // Don't send empty messages
+            }
+        
+            var userMessage = createMessage("You", userInput);
+            document.getElementById("chat-box").appendChild(userMessage);
+        
+            // Send the message to the Flask server and get the bot's response
+            fetch('/get_response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'user_input=' + userInput,
+            })
+            .then(response => response.json())
+            .then(data => {
+                var botMessage = createMessage("GymBot", data.response);
+                document.getElementById("chat-box").appendChild(botMessage);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+        }
+
+        function createMessage(sender, text) {
+            var msg = document.createElement("div");
+            msg.className = "msg";
+            msg.innerHTML = `
+                <div class="msg-img" style="background-image: url(${getSenderImage(sender)})"></div>
+                <div class="msg-bubble">
+                    <div class="msg-info">
+                        <div class="msg-info-name">${sender}</div>
+                        <div class="msg-info-time">${getCurrentTime()}</div>
+                    </div>
+                    <div class="msg-text">${text}</div>
+                </div>`;
+            return msg;
+        }
+
+        function getSenderImage(sender) {
+            // Add logic to return the image URL based on the sender (You, GymBot, etc.)
+            // For now, return a default image
+            return "https://image.flaticon.com/icons/svg/327/327779.svg";
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+    </script>
+</body>
+</html>
